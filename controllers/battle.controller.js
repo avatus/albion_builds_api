@@ -66,6 +66,7 @@ const saveBattle = async (bid) => {
         const battleId = await Battle.findOne({id: bid})
         if (battleId == null) {
             let { data: battle } = await axios.get(`${BATTLE_ROOT_URL}/${bid}`)
+            // console.log(battle)
             const history = await getHistory(battle)
             const players = formatPlayers(battle, history)
             const alliances = formatAlliances(battle, history, players)
@@ -113,11 +114,11 @@ exports.getBattle = async (req, res) => {
             return res.status(200).json(battleDB)
         }
         else {
+            saveBattle(req.params.id)
             return res.status(404).json({ message: 'Battle not found.' })
         }
 
     } catch (err) {
-        console.log(err)
         return res.status(500).json({ message: err.message })
     }
 }
