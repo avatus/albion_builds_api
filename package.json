@@ -5,6 +5,7 @@
   "author": "Michael Myers <michaelzmyers@gmail.com>",
   "license": "MIT",
   "scripts": {
+    "start": "node index",
     "dev": "nodemon index"
   },
   "dependencies": {
