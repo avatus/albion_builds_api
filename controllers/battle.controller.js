@@ -122,7 +122,7 @@ exports.getBattle = async (req, res) => {
     }
 }
 
-if (process.env.NODE_ENV === 'dev') {
+if (process.env.NODE_ENV !== 'dev') {
     schedule.scheduleJob('*/1 * * * *', async function () {
         try {
             const { data } = await axios.get(BATTLES_ENDPOINT, {
