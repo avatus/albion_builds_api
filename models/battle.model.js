@@ -7,6 +7,7 @@ const battleSchema = Schema({
     startTime: { type: Date },
     endTime: { type: Date },
     totalFame: { type: Number },
+    date_created: { type: Date, default: Date.now },
     totalKills: { type: Number },
     players: {
         players: { type: Array, default: []},

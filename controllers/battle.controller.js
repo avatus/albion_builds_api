@@ -87,7 +87,7 @@ const saveBattle = async (bid) => {
             battle.highestHealingPlayer = highestHealingPlayer
             battle.highestAssists = highestAssists
             battle.mostExpensiveDeath = mostExpensiveDeath
-            // battle.history = history
+            battle.date_created = Date.now()
 
             let newBattle = new Battle(battle)
 
@@ -96,7 +96,7 @@ const saveBattle = async (bid) => {
                     // console.log(err.message)
                 }
             })
-            return `Saved ${bid}`
+            return newBattle
         }
         else {
             return false
@@ -114,8 +114,8 @@ exports.getBattle = async (req, res) => {
             return res.status(200).json(battleDB)
         }
         else {
-            saveBattle(req.params.id)
-            return res.status(404).json({ message: 'Battle not found.' })
+            const battle = await saveBattle(req.params.id)
+            return res.status(200).json(battle)
         }
 
     } catch (err) {
@@ -151,9 +151,9 @@ if (process.env.NODE_ENV !== 'dev') {
     });
 
     schedule.scheduleJob('*/20 * * * *', async function () {
-        const mydate = moment().subtract(14, 'days')
+        const mydate = moment().subtract(4, 'days')
         try {
-            await Battle.deleteMany().where('startTime').lte(mydate)
+            await Battle.deleteMany().where('date_created').lte(mydate)
         } catch (err) {
             // console.log(err.message)
         }
