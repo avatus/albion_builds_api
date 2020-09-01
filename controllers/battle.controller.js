@@ -49,7 +49,7 @@ exports.getBattles = async (req, res) => {
         let battles = await Battle.paginate(queryOptions,{
             select: 'id startTime endTime totalKills alliances.list totalFame players.list',
             sort: {startTime: 'desc'},
-            limit: 50,
+            limit: 20,
             offset: parseInt(query.offset)
         })
 
