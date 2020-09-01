@@ -151,7 +151,7 @@ if (process.env.NODE_ENV !== 'dev') {
     });
 
     schedule.scheduleJob('*/20 * * * *', async function () {
-        const mydate = moment().subtract(4, 'days')
+        const mydate = moment().subtract(7, 'days')
         try {
             await Battle.deleteMany().where('date_created').lte(mydate)
         } catch (err) {
