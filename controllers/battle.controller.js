@@ -15,7 +15,7 @@ const {
 const { getHistory } = require('../util/battleHistory.functions')
 
 const BATTLES_ENDPOINT = "https://gameinfo.albiononline.com/api/gameinfo/battles";
-const BATTLES_LIMIT = 20;
+const BATTLES_LIMIT = 10;
 const BATTLES_SORT = "recent";
 
 const {
@@ -65,6 +65,7 @@ const saveBattle = async (bid) => {
     try {
         const battleId = await Battle.findOne({id: bid})
         if (battleId == null) {
+            console.log(`${moment.utc()}: Gathering ${battle.id}`)
             let { data: battle } = await axios.get(`${BATTLE_ROOT_URL}/${bid}`)
             // console.log(battle)
             const history = await getHistory(battle)
@@ -127,7 +128,7 @@ exports.getBattle = async (req, res) => {
 }
 
 if (process.env.NODE_ENV !== 'dev') {
-    schedule.scheduleJob('*/30 * * * * *', async function () {
+    schedule.scheduleJob('* * * * *', async function () {
         try {
             const { data } = await axios.get(BATTLES_ENDPOINT, {
                 params: {
@@ -144,7 +145,6 @@ if (process.env.NODE_ENV !== 'dev') {
                     const battle = data[i]
                     if (!gathered.includes(battle.id)) {
                         gathered.push(battle.id)
-                        console.log(`${moment.utc()}: Gathering ${battle.id}`)
                         await saveBattle(battle.id)
                     }
                 }
