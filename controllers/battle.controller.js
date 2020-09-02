@@ -1,4 +1,5 @@
 const Battle = require('../models/battle.model')
+const BattleQueue = require('../models/battleQueue.model')
 const axios = require('axios')
 const schedule = require('node-schedule');
 const moment = require('moment')
@@ -97,6 +98,9 @@ const saveBattle = async (bid) => {
                 }
                 else {
                     console.log(`${moment.utc()}: Saved ${battle.id}`)
+                    BattleQueue.findOneAndRemove({id: battle.id}).then(() => {
+                        console.log(`Removed ${battle.id} from queue.`)
+                    })
                 }
             })
             return newBattle
@@ -128,6 +132,24 @@ exports.getBattle = async (req, res) => {
 
 if (process.env.NODE_ENV !== 'dev') {
     schedule.scheduleJob('* * * * *', async function () {
+        let queued = await BattleQueue.find().sort('date_created')
+        ; await (async function() {
+            for (var i = 0; i < queued.length; i++) {
+                const battle = queued[i]
+                let savedBattle = await Battle.findOne({id: battle.id}).select('id')
+                if (!savedBattle) {
+                    await saveBattle(battle.id)
+                }
+                else {
+                    BattleQueue.findOneAndRemove({id: battle.id}).then(() => {
+                        console.log(`Removed ${battle.id} from queue.`)
+                    })
+                }
+            }
+        })()
+    })
+
+    schedule.scheduleJob('* * * * *', async function () {
         try {
             const { data } = await axios.get(BATTLES_ENDPOINT, {
                 params: {
@@ -138,18 +160,30 @@ if (process.env.NODE_ENV !== 'dev') {
                 },
                 timeout: 120000,
             });
-            (async function() {
-                    let gathered = []
-                for (var i = 0; i < data.length; i++) {
-                    const battle = data[i]
-                    if (!gathered.includes(battle.id)) {
-                        gathered.push(battle.id)
-                        await saveBattle(battle.id)
-                    }
+            data.forEach(async b => {
+                let battle = await Battle.findOne({id: b.id})
+                if (!battle) {
+                    BattleQueue.findOne({id: b.id})
+                    .then(queued => {
+                        if (!queued) {
+                            let newQueue = new BattleQueue({id: b.id})
+                            newQueue.save((err) => {
+                                if (err) {
+                                    console.log(`Failed to queue: ${b.id}`)
+                                }
+                                else {
+                                    console.log(`Queued: ${b.id}`)
+                                }
+                            })
+                        }
+                    })
+                    .catch(err => {
+                        console.log(err.message)
+                    })
                 }
-            })()
+            })
         } catch (err) {
-            // console.log(err.message)
+            console.log(err.message)
         }
     });
 
@@ -158,7 +192,7 @@ if (process.env.NODE_ENV !== 'dev') {
         try {
             await Battle.deleteMany().where('date_created').lte(mydate)
         } catch (err) {
-            // console.log(err.message)
+            console.log(err.message)
         }
     });
 }
