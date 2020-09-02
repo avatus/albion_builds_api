@@ -93,7 +93,7 @@ const saveBattle = async (bid) => {
 
             newBattle.save((err) => {
                 if (err) {
-                    // console.log(err.message)
+                    console.log(`${moment.utc()}: Failed ${battle.id}`)
                 }
                 else {
                     console.log(`${moment.utc()}: Saved ${battle.id}`)
