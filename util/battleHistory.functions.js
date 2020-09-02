@@ -7,15 +7,16 @@ async function getData(id, offset) {
 }
 
 exports.getHistory = async (battle) => {
-    let battleHistory = []
-    let offset = 0
-    let events = await getData(battle.id, offset)
-    battleHistory = battleHistory.concat(events)
-    while (events.length > 49) {
-        offset += 50
-        battleHistory = battleHistory.concat(events)
-        events = await getData(battle.id, offset)
-    }
+    // let events = await getData(battle.id, offset)
+    const { data: battleHistory } = await axios.get(`${BATTLE_HISTORY_URL}/${battle.id}`, {
+        timeout: 120000,
+    })
+    // battleHistory = battleHistory.concat(events)
+    // while (events.length > 49) {
+    //     offset += 50
+    //     battleHistory = battleHistory.concat(events)
+    //     events = await getData(battle.id, offset)
+    // }
     battleHistory.sort((a, b) => a.TimeStamp - b.TimeStamp)
     return battleHistory
 }

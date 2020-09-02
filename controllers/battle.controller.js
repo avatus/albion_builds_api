@@ -15,7 +15,7 @@ const {
 const { getHistory } = require('../util/battleHistory.functions')
 
 const BATTLES_ENDPOINT = "https://gameinfo.albiononline.com/api/gameinfo/battles";
-const BATTLES_LIMIT = 10;
+const BATTLES_LIMIT = 20;
 const BATTLES_SORT = "recent";
 
 const {
@@ -67,7 +67,6 @@ const saveBattle = async (bid) => {
         if (battleId == null) {
             console.log(`${moment.utc()}: Gathering ${bid}`)
             let { data: battle } = await axios.get(`${BATTLE_ROOT_URL}/${bid}`)
-            // console.log(battle)
             const history = await getHistory(battle)
             const players = formatPlayers(battle, history)
             const alliances = formatAlliances(battle, history, players)
