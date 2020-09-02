@@ -65,7 +65,7 @@ const saveBattle = async (bid) => {
     try {
         const battleId = await Battle.findOne({id: bid})
         if (battleId == null) {
-            console.log(`${moment.utc()}: Gathering ${battle.id}`)
+            console.log(`${moment.utc()}: Gathering ${bid}`)
             let { data: battle } = await axios.get(`${BATTLE_ROOT_URL}/${bid}`)
             // console.log(battle)
             const history = await getHistory(battle)
