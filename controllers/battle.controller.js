@@ -95,6 +95,9 @@ const saveBattle = async (bid) => {
                 if (err) {
                     // console.log(err.message)
                 }
+                else {
+                    console.log(`${moment.utc()}: Saved ${battle.id}`)
+                }
             })
             return newBattle
         }
@@ -136,11 +139,12 @@ if (process.env.NODE_ENV !== 'dev') {
                 timeout: 120000,
             });
             (async function() {
-                let gathered = []
+                    let gathered = []
                 for (var i = 0; i < data.length; i++) {
                     const battle = data[i]
                     if (!gathered.includes(battle.id)) {
                         gathered.push(battle.id)
+                        console.log(`${moment.utc()}: Gathering ${battle.id}`)
                         await saveBattle(battle.id)
                     }
                 }
