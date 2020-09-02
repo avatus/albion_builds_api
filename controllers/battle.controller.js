@@ -41,7 +41,7 @@ exports.getBattles = async (req, res) => {
 
         if (!Number.isNaN(parseInt(query.search))) {
             queryOptions['$or'].push(
-                { 'id': { '$regex' : parseInt(query.search), $options: '-i' } },
+                { 'id':  parseInt(query.search)}
             )
         }
     }
