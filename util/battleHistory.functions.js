@@ -2,7 +2,7 @@ const axios = require('axios')
 const { BATTLE_HISTORY_URL } = require('./constants')
 
 async function getData(id, offset) {
-    const { data: events } = await axios.get(`${BATTLE_HISTORY_URL}/${id}?limit=25&offset=${offset}`)
+    const { data: events } = await axios.get(`${BATTLE_HISTORY_URL}/${id}?limit=50&offset=${offset}`)
     return events
 }
 
@@ -11,8 +11,8 @@ exports.getHistory = async (battle) => {
     let offset = 0
     let events = await getData(battle.id, offset)
     battleHistory = battleHistory.concat(events)
-    while (events.length > 24) {
-        offset += 25
+    while (events.length > 49) {
+        offset += 50
         battleHistory = battleHistory.concat(events)
         events = await getData(battle.id, offset)
     }
