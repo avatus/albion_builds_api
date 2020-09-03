@@ -16,7 +16,7 @@ const {
 const { getHistory } = require('../util/battleHistory.functions')
 
 const BATTLES_ENDPOINT = "https://gameinfo.albiononline.com/api/gameinfo/battles";
-const BATTLES_LIMIT = 30;
+const BATTLES_LIMIT = 50;
 const BATTLES_SORT = "recent";
 
 const {
