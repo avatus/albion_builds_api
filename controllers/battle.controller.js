@@ -149,7 +149,7 @@ if (process.env.NODE_ENV !== 'dev') {
         })()
     })
 
-    schedule.scheduleJob('* * * * *', async function () {
+    schedule.scheduleJob('*/2 * * * *', async function () {
         try {
             const { data } = await axios.get(BATTLES_ENDPOINT, {
                 params: {
