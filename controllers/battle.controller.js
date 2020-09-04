@@ -94,10 +94,10 @@ const saveBattle = async (bid) => {
 
             newBattle.save((err) => {
                 if (err) {
-                    console.log(`${moment.utc()}: Failed ${battle.id}`)
+                    console.log(`Failed ${battle.id}`)
                 }
                 else {
-                    console.log(`${moment.utc()}: Saved ${battle.id}`)
+                    console.log(`Saved ${battle.id}`)
                     BattleQueue.findOneAndRemove({id: battle.id}).then(() => {
                         console.log(`Removed ${battle.id} from queue.`)
                     })
@@ -169,13 +169,13 @@ if (process.env.NODE_ENV !== 'dev') {
                         let battle = data[i]
                         const parsed = await Battle.findOne({id: battle.id })
                         if (parsed) {
-                            console.log(`Battle ${battle.id} already parsed`)
+                            // console.log(`Battle ${battle.id} already parsed`)
                             gathered += 1
                         }
                         else {
                             const queued = await BattleQueue.findOne({id: battle.id})
                             if (queued) {
-                                console.log(`Battle ${battle.id} already queued`)
+                                // console.log(`Battle ${battle.id} already queued`)
                                 gathered += 1
                             }
                             else {
@@ -187,6 +187,9 @@ if (process.env.NODE_ENV !== 'dev') {
                     }
                 })()
                 offset += BATTLES_LIMIT
+                if (offset > 200) {
+                    console.log(`${BATTLES_LIMIT} parse limit reached`)
+                }
             }
         } catch (err) {
             console.log(err.message)
