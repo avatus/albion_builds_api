@@ -151,37 +151,43 @@ if (process.env.NODE_ENV !== 'dev') {
 
     schedule.scheduleJob('*/2 * * * *', async function () {
         try {
-            const { data } = await axios.get(BATTLES_ENDPOINT, {
-                params: {
-                    offset: 0,
-                    limit: BATTLES_LIMIT,
-                    sort: BATTLES_SORT,
-                    timestamp: moment().unix(),
-                },
-                timeout: 120000,
-            });
-            data.forEach(async b => {
-                let battle = await Battle.findOne({id: b.id})
-                if (!battle) {
-                    BattleQueue.findOne({id: b.id})
-                    .then(queued => {
-                        if (!queued) {
-                            let newQueue = new BattleQueue({id: b.id})
-                            newQueue.save((err) => {
-                                if (err) {
-                                    console.log(`Failed to queue: ${b.id}`)
-                                }
-                                else {
-                                    console.log(`Queued: ${b.id}`)
-                                }
-                            })
+            let gathered = 0
+            let offset = 0
+            while(gathered < 200) {
+                console.log(`Gathering battles with offset: ${offset}`)
+                const { data } = await axios.get(BATTLES_ENDPOINT, {
+                    params: {
+                        offset,
+                        limit: BATTLES_LIMIT,
+                        sort: BATTLES_SORT,
+                        timestamp: moment().unix(),
+                    },
+                    timeout: 120000,
+                });
+                await (async function() {
+                    for (var i = 0; i<data.length; i++) {
+                        let battle = data[i]
+                        const parsed = await Battle.findOne({id: battle.id })
+                        if (parsed) {
+                            console.log(`Battle ${battle.id} already parsed`)
+                            gathered += 1
                         }
-                    })
-                    .catch(err => {
-                        console.log(err.message)
-                    })
-                }
-            })
+                        else {
+                            const queued = await BattleQueue.findOne({id: battle.id})
+                            if (queued) {
+                                console.log(`Battle ${battle.id} already queued`)
+                                gathered += 1
+                            }
+                            else {
+                                console.log(`Battle ${battle.id} added to queue`)
+                                let newQueue = new BattleQueue({id: battle.id})
+                                await newQueue.save()
+                            }
+                        }
+                    }
+                })()
+                offset += BATTLES_LIMIT
+            }
         } catch (err) {
             console.log(err.message)
         }
