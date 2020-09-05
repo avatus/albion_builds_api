@@ -130,6 +130,165 @@ exports.getBattle = async (req, res) => {
     }
 }
 
+exports.getMultiLog = async (req, res) => {
+    try {
+        const ids = req.params.ids.split(',')
+        let main = null
+        let battles = []
+        ;await (async function() {
+            for (var i = 0; i < ids.length; i++) {
+                const battleID = ids[i].trim()
+                const battle = await Battle.findOne({ id: battleID }).select('-history')
+                if (battle !== null) {
+                    if (i === 0) {
+                        main = battle
+                    }
+                    else {
+                        battles.push(battle)
+                    }
+                }
+            }
+        })()
+
+        if (main === null) {
+            return res.status(400).json({message: 'invalid battle IDs'})
+        }
+
+        if (battles.length < 1) {
+            return res.status(200).json(main)
+        }
+
+
+        let combinedalliances = {}
+        let combinedguilds = {}
+        let combinedplayers = {}
+
+        main.alliances.alliances.forEach(a => {
+            combinedalliances[a.id] = a
+            combinedalliances[a.id].count = 1
+            combinedalliances[a.id].totalPlayers = 0
+        })
+
+        main.guilds.guilds.forEach(g => {
+            combinedguilds[g.id] = g
+            combinedguilds[g.id].count = 1
+            combinedguilds[g.id].totalPlayers = 0
+        })
+
+        main.players.players.forEach(p => {
+            combinedplayers[p.id] = p
+            combinedplayers[p.id].count = 1
+        })
+
+        battles.forEach(b => {
+            main.totalKills += b.totalKills
+            main.totalFame += b.totalFame
+            b.alliances.alliances.forEach(a => {
+                if (combinedalliances[a.id]) {
+                    combinedalliances[a.id].count += 1
+                    combinedalliances[a.id].kills += a.kills
+                    combinedalliances[a.id].deaths += a.deaths
+                    combinedalliances[a.id].killFame += a.killFame
+                    combinedalliances[a.id].totalDamage += a.totalDamage
+                    combinedalliances[a.id].totalHealing += a.totalHealing
+                    combinedalliances[a.id].averageIp += a.averageIp
+                }
+                else {
+                    combinedalliances[a.id] = a
+                    combinedalliances[a.id].count = 1
+                    combinedalliances[a.id].totalPlayers = 0
+                }
+            })
+
+            b.guilds.guilds.forEach(g => {
+                if (combinedguilds[g.id]) {
+                    combinedguilds[g.id].count += 1
+                    combinedguilds[g.id].kills += g.kills
+                    combinedguilds[g.id].killFame += g.killFame
+                    combinedguilds[g.id].averageIp += g.averageIp
+                }
+                else {
+                    combinedguilds[g.id] = g
+                    combinedguilds[g.id].count = 1
+                    combinedguilds[g.id].totalPlayers = 0
+                }
+            })
+            b.players.players.forEach(p => {
+                if (combinedplayers[p.id]) {
+                    combinedplayers[p.id].count += 1
+                    combinedplayers[p.id].kills += p.kills
+                    combinedplayers[p.id].deaths += p.deaths
+                    combinedplayers[p.id].killFame += p.killFame
+                    combinedplayers[p.id].totalDamage += p.totalDamage
+                    combinedplayers[p.id].totalHealing += p.totalHealing
+                    combinedplayers[p.id].totalKillContribution += p.totalKillContribution
+                    combinedplayers[p.id].ip += p.ip
+                }
+                else {
+                    combinedplayers[p.id] = p
+                }
+            })
+
+            if (b.highestDamagePlayer.players[0].totalDamage > main.highestDamagePlayer.players[0].totalDamage) {
+                main.highestDamagePlayer = b.highestDamagePlayer
+            }
+
+            if (b.highestAssists.players[0].totalKillContribution > main.highestAssists.players[0].totalKillContribution) {
+                main.highestAssists = b.highestAssists
+            }
+
+            if (b.highestHealingPlayer.players[0].totalHealing > main.highestHealingPlayer.players[0].totalHealing) {
+                main.highestHealingPlayer = b.highestHealingPlayer
+            }
+
+            if (b.highestKillsPlayer.players[0].kills > main.highestKillsPlayer.players[0].kills) {
+                main.highestKillsPlayer = b.highestKillsPlayer
+            }
+
+            if (b.mostExpensiveDeath.player.DeathFame > main.mostExpensiveDeath.player.DeathFame) {
+                main.mostExpensiveDeath = b.mostExpensiveDeath
+            }
+
+        })
+
+        main.alliances.alliances = []
+        main.guilds.guilds = []
+        main.players.players = []
+
+        Object.keys(combinedplayers).forEach(pid => {
+            combinedplayers[pid].ip = Math.round(combinedplayers[pid].ip/combinedplayers[pid].count)
+            main.players.players.push(combinedplayers[pid])
+        })
+
+        main.players.players.forEach(p => {
+            if (combinedalliances[p.allianceId]) {
+                combinedalliances[p.allianceId].totalPlayers += 1
+            }
+            if (combinedguilds[p.guildId]) {
+                combinedguilds[p.guildId].totalPlayers += 1
+            }
+        })
+
+        Object.keys(combinedalliances).forEach(aid => {
+            combinedalliances[aid].averageIp = Math.round(combinedalliances[aid].averageIp/combinedalliances[aid].count)
+            main.alliances.alliances.push(combinedalliances[aid])
+        })
+
+        Object.keys(combinedguilds).forEach(gid => {
+            combinedguilds[gid].averageIp = Math.round(combinedguilds[gid].averageIp/combinedguilds[gid].count)
+            main.guilds.guilds.push(combinedguilds[gid])
+        })
+
+
+        main.totalPlayers = main.players.players.length
+        return res.status(200).json(main)
+
+
+    } catch (err) {
+        return res.status(500).json({ message: err.message })
+    }
+}
+
 if (process.env.NODE_ENV !== 'dev') {
     schedule.scheduleJob('* * * * *', async function () {
         let queued = await BattleQueue.find().sort('date_created')
@@ -188,7 +347,7 @@ if (process.env.NODE_ENV !== 'dev') {
                 })()
                 offset += BATTLES_LIMIT
                 if (offset > 200) {
-                    console.log(`${BATTLES_LIMIT} parse limit reached`)
+                    console.log(`200 parse limit reached`)
                 }
             }
         } catch (err) {
