@@ -201,9 +201,11 @@ exports.getMultiLog = async (req, res) => {
             })
 
             b.guilds.guilds.forEach(g => {
+                console.log(g)
                 if (combinedguilds[g.id]) {
                     combinedguilds[g.id].count += 1
                     combinedguilds[g.id].kills += g.kills
+                    combinedguilds[g.id].deaths += g.deaths
                     combinedguilds[g.id].killFame += g.killFame
                     combinedguilds[g.id].averageIp += g.averageIp
                 }
