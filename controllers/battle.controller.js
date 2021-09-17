@@ -300,7 +300,7 @@ exports.getMultiLog = async (req, res) => {
 
 if (process.env.NODE_ENV !== "dev") {
   schedule.scheduleJob("* * * * *", async function () {
-    let queued = await BattleQueue.find().sort("date_created").limit(100);
+    let queued = await BattleQueue.find().sort("date_created").limit(500);
     await (async function () {
       for (var i = 0; i < queued.length; i++) {
         const battle = queued[i];
